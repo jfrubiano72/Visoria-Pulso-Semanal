@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VISORIA Intelligence · Pulso Semanal Colombia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+:root{--navy:#0B1628;--navy2:#0f2040;--navy3:#162b4a;--gold:#C8973A;--goldl:#F5D080;--white:#F4F6FA;--blue:#137DC5;--green:#1D9E75;--red:#C0392B;--orange:#E67E22;--gray:#8a9ab0;--border:rgba(200,151,58,0.18);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--navy);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+/* HEADER */
+.hdr{background:linear-gradient(180deg,#080f1e,#0d1a32);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.hdr-left{display:flex;align-items:center;gap:12px;}
+.logo-box{width:40px;height:40px;background:#0B1628;border:1px solid var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.hdr-brand{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);letter-spacing:.5px;}
+.hdr-sub{font-family:'DM Mono',monospace;font-size:8px;color:var(--gold);letter-spacing:3px;margin-top:1px;}
+.hdr-right{text-align:right;}
+.hdr-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);}
+.hdr-ed{font-size:11px;color:var(--gray);margin-top:2px;}
+.agents-tag{background:rgba(200,151,58,.12);border:1px solid rgba(200,151,58,.25);border-radius:4px;padding:3px 8px;font-family:'DM Mono',monospace;font-size:9px;color:var(--goldl);margin-top:4px;display:inline-block;}
+
+/* NAV TABS */
+.nav{background:#0a1828;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 28px;gap:2px;}
+.nt{padding:13px 16px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.5px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.nt:hover{color:var(--white);}
+.nt.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* LAYOUT */
+.wrap{max-width:1200px;margin:0 auto;padding:24px 28px;}
+.panel{display:none;}
+.panel.on{display:block;}
+
+/* GRID HELPERS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.gchart{display:grid;grid-template-columns:2fr 1fr;gap:14px;}
+
+/* CARDS */
+.card{background:var(--navy2);border:1px solid rgba(255,255,255,.055);border-radius:10px;padding:18px;}
+.card.gold-border{border-color:rgba(200,151,58,.3);}
+.card.featured{background:linear-gradient(135deg,var(--navy2),var(--navy3));border-color:rgba(200,151,58,.25);}
+
+/* SECTION LABEL */
+.slabel{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--gold);margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+
+/* STAT STRIP */
+.stat-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px;}
+.stat{background:var(--navy2);border:1px solid var(--border);border-radius:9px;padding:13px 14px;}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--gray);letter-spacing:1.5px;margin-bottom:5px;}
+.stat-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--gold);}
+.stat-chg{font-size:10px;margin-top:3px;font-family:'DM Mono',monospace;}
+.up{color:#e74c4c;}.dn{color:#27ae60;}.neu{color:var(--gold);}
+
+/* MARKET TICKER */
+.ticker-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:22px;}
+.tick{background:var(--navy2);border:1px solid var(--border);border-radius:7px;padding:9px 14px;white-space:nowrap;flex-shrink:0;}
+.tick-name{font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;}
+.tick-val{font-size:14px;font-weight:500;color:var(--white);font-family:'DM Mono',monospace;margin:2px 0;}
+.tick-chg{font-size:10px;font-family:'DM Mono',monospace;}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;height:200px;margin-top:12px;}
+.chart-wrap.tall{height:260px;}
+
+/* RANGE BTNS */
+.rbtn-group{display:flex;gap:5px;margin-bottom:10px;}
+.rbtn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--gray);cursor:pointer;transition:all .15s;}
+.rbtn:hover{color:var(--white);}
+.rbtn.active{background:rgba(200,151,58,.2);border-color:var(--gold);color:var(--gold);}
+
+/* NEWS CARDS */
+.news-card{background:var(--navy2);border:1px solid rgba(255,255,255,.055);border-radius:10px;padding:17px;margin-bottom:12px;cursor:default;transition:border-color .2s;}
+.news-card:hover{border-color:rgba(200,151,58,.3);}
+.news-card.featured{border-color:rgba(200,151,58,.25);background:linear-gradient(135deg,var(--navy2),var(--navy3));}
+.nc-meta{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap;}
+.badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;font-family:'DM Mono',monospace;letter-spacing:.5px;}
+.b-pol{background:rgba(192,57,43,.2);color:#FF8A7A;border:1px solid rgba(192,57,43,.3);}
+.b-eco{background:rgba(29,158,117,.2);color:#5DCCAA;border:1px solid rgba(29,158,117,.3);}
+.b-ele{background:rgba(19,125,197,.2);color:#5BB3E8;border:1px solid rgba(19,125,197,.3);}
+.b-cor{background:rgba(192,57,43,.3);color:#FF6B5B;border:1px solid rgba(192,57,43,.4);}
+.b-sec{background:rgba(200,151,58,.15);color:var(--goldl);border:1px solid rgba(200,151,58,.3);}
+.b-wrl{background:rgba(100,100,160,.2);color:#B0B8E8;border:1px solid rgba(100,100,160,.3);}
+.b-vis{background:rgba(200,151,58,.25);color:var(--gold);border:1px solid var(--gold);}
+.nc-src{font-size:10px;color:rgba(244,246,250,.3);font-family:'DM Mono',monospace;}
+.nc-date{font-size:10px;color:rgba(244,246,250,.2);margin-left:auto;font-family:'DM Mono',monospace;}
+.nc-title{font-size:14px;font-weight:600;color:var(--white);line-height:1.4;margin-bottom:7px;}
+.nc-title.big{font-size:16px;font-family:'Playfair Display',serif;}
+.nc-body{font-size:12px;color:rgba(244,246,250,.6);line-height:1.6;margin-bottom:10px;}
+.nc-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.imp{font-size:9px;padding:2px 7px;border-radius:3px;font-family:'DM Mono',monospace;}
+.imp-h{background:rgba(192,57,43,.2);color:#FF8A7A;}
+.imp-m{background:rgba(200,151,58,.2);color:var(--gold);}
+.imp-l{background:rgba(29,158,117,.15);color:#5DCCAA;}
+.vtag{font-size:9px;color:var(--gold);font-family:'DM Mono',monospace;margin-left:auto;opacity:.7;}
+
+/* VISORIA ESTRATÉGICO */
+.vis-block{background:linear-gradient(135deg,#0a1f3a,#0f2a50);border:1px solid rgba(200,151,58,.35);border-radius:10px;padding:18px;margin-bottom:14px;}
+.vis-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.vis-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+.vis-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--gold);}
+.vis-type{font-size:9px;padding:2px 8px;border-radius:3px;font-family:'DM Mono',monospace;}
+.vt-cnt{background:rgba(29,158,117,.2);color:#5DCCAA;border:1px solid rgba(29,158,117,.3);}
+.vt-pos{background:rgba(19,125,197,.2);color:#5BB3E8;border:1px solid rgba(19,125,197,.3);}
+.vt-inf{background:rgba(200,151,58,.2);color:var(--goldl);border:1px solid rgba(200,151,58,.3);}
+.vis-body{font-size:13px;color:rgba(244,246,250,.8);line-height:1.6;}
+.vis-action{margin-top:10px;padding:8px 12px;background:rgba(200,151,58,.1);border-left:2px solid var(--gold);font-size:12px;color:rgba(244,246,250,.7);font-family:'DM Mono',monospace;}
+
+/* MARKET TABLE */
+.mtable{width:100%;border-collapse:collapse;}
+.mtable th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--gray);padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;}
+.mtable th:first-child{text-align:left;}
+.mtable td{font-family:'DM Mono',monospace;font-size:12px;color:var(--white);padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);text-align:right;}
+.mtable td:first-child{text-align:left;color:rgba(244,246,250,.7);}
+.mtable tr:hover td{background:rgba(255,255,255,.03);}
+
+/* AGENT INFO */
+.agent-note{background:rgba(200,151,58,.08);border:1px solid rgba(200,151,58,.2);border-radius:7px;padding:10px 14px;margin-bottom:18px;font-size:11px;color:var(--gray);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:8px;}
+
+/* POLL */
+.poll{background:var(--navy2);border:1px solid rgba(255,255,255,.055);border-radius:9px;padding:15px;margin-bottom:10px;}
+.poll-top{display:flex;justify-content:space-between;margin-bottom:10px;}
+.poll-name{font-size:13px;font-weight:500;color:var(--white);}
+.poll-party{font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;margin-top:2px;}
+.poll-pct{font-size:22px;font-weight:600;color:var(--gold);font-family:'DM Mono',monospace;}
+.bar-bg{background:rgba(255,255,255,.07);border-radius:3px;height:5px;overflow:hidden;}
+.bar{height:100%;border-radius:3px;transition:width 1.2s ease;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stat-strip{grid-template-columns:repeat(2,1fr);}
+  .g2,.g3,.g4,.gchart{grid-template-columns:1fr;}
+  .wrap{padding:14px 16px;}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="logo-box">
+      <svg width="24" height="21" viewBox="0 0 48 42">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C8973A"/><stop offset="100%" stop-color="#F5D080"/></linearGradient></defs>
+        <path d="M4 6L24 36L44 6" fill="none" stroke="url(#lg)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="24" cy="36" r="3.5" fill="#F5D080"/>
+      </svg>
+    </div>
+    <div>
+      <div class="hdr-brand">Visoria Intelligence</div>
+      <div class="hdr-sub">PULSO SEMANAL · COLOMBIA</div>
+
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-date">DOM 29 MAR 2026 · 6:30 AM</div>
+    <div class="hdr-ed">Edición #001 · Semana 23–29 Marzo</div>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="nt on" onclick="tab('resumen')">RESUMEN</div>
+  <div class="nt" onclick="tab('mercados')">MERCADOS</div>
+  <div class="nt" onclick="tab('sectores')">SECTORES</div>
+  <div class="nt" onclick="tab('politica')">POLÍTICA</div>
+  <div class="nt" onclick="tab('elecciones')">ELECCIONES</div>
+  <div class="nt" onclick="tab('visoria')">VISORIA ESTRATÉGICO</div>
+</nav>
+
+<!-- ═══════ RESUMEN ═══════ -->
+<div id="p-resumen" class="panel on">
+<div class="wrap">
+
+
+  <div class="stat-strip">
+    <div class="stat"><div class="stat-lbl">TRM USD/COP</div><div class="stat-val">$3.675</div><div class="stat-chg dn">▼ –2.4% en marzo</div></div>
+    <div class="stat"><div class="stat-lbl">WTI $/barril</div><div class="stat-val">$98.7</div><div class="stat-chg up">▲ +54% en 2026</div></div>
+    <div class="stat"><div class="stat-lbl">ORO XAU/USD</div><div class="stat-val">$4.493</div><div class="stat-chg up">▲ +48% vs año ant.</div></div>
+    <div class="stat"><div class="stat-lbl">ECOPETROL BVC</div><div class="stat-val">$2.735</div><div class="stat-chg dn">▼ –1.6% 24h · +27% año</div></div>
+    <div class="stat"><div class="stat-lbl">DÍAS PRES. 2026</div><div class="stat-val">63</div><div class="stat-chg neu">1ª vuelta 31 Mayo</div></div>
+  </div>
+
+  <div class="slabel">TITULARES DE LA SEMANA · 23–29 MARZO 2026</div>
+  <div class="g2">
+
+    <div class="news-card featured">
+      <div class="nc-meta"><span class="badge b-cor">ESCÁNDALO MAYOR</span><span class="badge b-sec">EXCLUSIVO SEMANA</span><span class="nc-date">28 mar</span></div>
+      <div class="nc-title big">+30 congresistas investigados por nuevo escándalo en el Invías — mayor que la UNGRD</div>
+      <div class="nc-body">La Corte Suprema investiga a más de 30 parlamentarios por presunta compra de votos con contratos del Invías. Testigo estrella: María Alejandra Benavides (MinHacienda). 430.000 millones en facturas sin pagar. Exministros Bonilla y Velasco vuelven a aparecer.</div>
+      <div class="nc-foot"><span class="imp imp-h">IMPACTO CRÍTICO</span><span class="vtag">→ Factor Político PESTEL</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-wrl">GEOPOLÍTICA</span><span class="nc-src">FXStreet / BBC</span><span class="nc-date">25–28 mar</span></div>
+      <div class="nc-title">Conflicto Irán–Israel: WTI a $98.7 (+8.5% semana), oro cae desde máximos históricos de $5.597</div>
+      <div class="nc-body">El cierre del Estrecho de Ormuz disparó el petróleo. El WTI subió +54% en lo corrido de 2026. El oro, que llegó a $5.597 en enero, cae a $4.493 por rotación hacia dólar y bonos. Trump propuso plan de paz el miércoles; Irán lo rechazó.</div>
+      <div class="nc-foot"><span class="imp imp-h">IMPACTO MUY ALTO</span><span class="vtag">→ Todos los sectores</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-ele">ELECCIONES</span><span class="nc-src">Guarumo–Ecoanalítica</span><span class="nc-date">28 mar</span></div>
+      <div class="nc-title">Cepeda lidera 37.5%, Valencia sube 13 puntos — todo apunta a segunda vuelta el 21 de junio</div>
+      <div class="nc-body">63 días para primera vuelta. De la Espriella baja a 20.2%. 16.7% de indecisos. Tarjetón presidencial con 14 candidatos confirmados. Hoy último día para inscribir cédula.</div>
+      <div class="nc-foot"><span class="imp imp-h">IMPACTO ALTO</span><span class="vtag">→ Incertidumbre inversión</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-eco">ECONOMÍA</span><span class="nc-src">Caracol / BBVA Research</span><span class="nc-date">27 mar</span></div>
+      <div class="nc-title">BBVA proyecta PIB Colombia 2026 en +2.8% — dólar en mínimos pero analistas anticipan rebote</div>
+      <div class="nc-body">Crecimiento liderado por servicios y consumo privado. TRM cerró semana en $3.675, mínimo mensual. Analistas de Global66 y Values AAA advierten rebote a $3.765–$3.800 en abril por geopolítica y elecciones.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span><span class="vtag">→ Factor Económico PESTEL</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">TECNOLOGÍA</span><span class="nc-src">CNBC / EBC Financial</span><span class="nc-date">27 mar</span></div>
+      <div class="nc-title">Tech stocks: peor semana en casi un año — Nvidia cae a $167 desde máximo de $212; S&P500 a 6.600 pts</div>
+      <div class="nc-body">La guerra en Irán presiona el sector tecnológico. Nasdaq en 21.929 pts. Nvidia pierde –21% desde su máximo de 2026. Jim Cramer: "El oil shock está conduciendo este sell-off". Magnificient 7 pierden $1.72 trillones en capitalización bursátil.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span><span class="vtag">→ Sector tecnología</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">CONSTRUCCIÓN</span><span class="nc-src">Bancolombia / Camacol</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Sector construción: inversión en riesgo por Invías paralizado y demora en licencias</div>
+      <div class="nc-body">El caso Invías bloquea 430.000 millones en pagos. Camacol alerta por desmonte de subsidios VIS. La construcción creció +13% en 2 primeros meses del año en LATAM, pero Colombia muestra debilidad. Tasas altas y cautela de hogares frenan edificaciones.</div>
+      <div class="nc-foot"><span class="imp imp-h">IMPACTO ALTO</span><span class="vtag">→ Sector construcción</span></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ═══════ MERCADOS ═══════ -->
+<div id="p-mercados" class="panel">
+<div class="wrap">
+
+
+  <div class="slabel">DIVISAS vs COP</div>
+  <div class="ticker-row">
+    <div class="tick"><div class="tick-name">USD/COP</div><div class="tick-val">$3.675</div><div class="tick-chg dn">▼ –0.36% viernes</div></div>
+    <div class="tick"><div class="tick-name">EUR/COP</div><div class="tick-val">$4.239</div><div class="tick-chg dn">▼ –0.22% (EUR/USD 1.153)</div></div>
+    <div class="tick"><div class="tick-name">GBP/COP</div><div class="tick-val">$4.895</div><div class="tick-chg dn">▼ –0.28% (GBP/USD 1.332)</div></div>
+    <div class="tick"><div class="tick-name">MXN/COP</div><div class="tick-val">$183.2</div><div class="tick-chg neu">≈ estable</div></div>
+    <div class="tick"><div class="tick-name">TASA BANREP</div><div class="tick-val">10.25%</div><div class="tick-chg up">▲ +100pbs ene 2026</div></div>
+  </div>
+
+  <!-- CHART USD/COP -->
+  <div class="g2" style="margin-bottom:22px;">
+    <div class="card">
+      <div class="slabel" style="margin-bottom:8px;">USD / COP — HISTÓRICO</div>
+      <div class="rbtn-group" id="usd-rg">
+        <button class="rbtn" onclick="setRange('usd','anio')">AÑO</button>
+        <button class="rbtn" onclick="setRange('usd','sem')">SEMESTRE</button>
+        <button class="rbtn" onclick="setRange('usd','tri')">TRIMESTRE</button>
+        <button class="rbtn" onclick="setRange('usd','mes')">MES</button>
+        <button class="rbtn active" onclick="setRange('usd','semana')">SEMANA</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chartUSD"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="slabel" style="margin-bottom:8px;">WTI & BRENT — HISTÓRICO</div>
+      <div class="rbtn-group" id="oil-rg">
+        <button class="rbtn" onclick="setRange('oil','anio')">AÑO</button>
+        <button class="rbtn" onclick="setRange('oil','sem')">SEMESTRE</button>
+        <button class="rbtn" onclick="setRange('oil','tri')">TRIMESTRE</button>
+        <button class="rbtn" onclick="setRange('oil','mes')">MES</button>
+        <button class="rbtn active" onclick="setRange('oil','semana')">SEMANA</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chartOil"></canvas></div>
+    </div>
+  </div>
+
+  <!-- COMMODITIES & INDICES -->
+  <div class="slabel">COMMODITIES Y MATERIAS PRIMAS</div>
+  <div class="g3" style="margin-bottom:22px;">
+    <div class="card">
+      <div class="slabel" style="margin-bottom:8px;">ORO XAU/USD</div>
+      <div class="rbtn-group" id="gold-rg">
+        <button class="rbtn" onclick="setRange('gold','anio')">AÑO</button>
+        <button class="rbtn" onclick="setRange('gold','sem')">SEM.</button>
+        <button class="rbtn active" onclick="setRange('gold','tri')">TRIM.</button>
+        <button class="rbtn" onclick="setRange('gold','mes')">MES</button>
+        <button class="rbtn" onclick="setRange('gold','semana')">SEM.</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chartGold"></canvas></div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gold);margin-bottom:12px;letter-spacing:1px;">RESUMEN COMMODITIES</div>
+      <table class="mtable">
+        <thead><tr><th>Activo</th><th>Precio</th><th>Semana</th><th>Año</th></tr></thead>
+        <tbody>
+          <tr><td>WTI ($/bbl)</td><td>$98.7</td><td class="up">▲+2.9%</td><td class="up">+54.3%</td></tr>
+          <tr><td>Brent ($/bbl)</td><td>$114.8</td><td class="up">▲+2.3%</td><td class="up">+74.5%</td></tr>
+          <tr><td>Oro XAU/USD</td><td>$4.493</td><td class="dn">▼–14.1%</td><td class="up">+48.5%</td></tr>
+          <tr><td>Asia petróleo</td><td>$120–150</td><td class="up">▲Premium</td><td>—</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px;color:var(--gray);margin-top:10px;font-family:'DM Mono',monospace;">⚠ Asia paga prima de $20-50 sobre WTI por cierre de Ormuz</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gold);margin-bottom:12px;letter-spacing:1px;">ÍNDICES GLOBALES</div>
+      <table class="mtable">
+        <thead><tr><th>Índice</th><th>Nivel</th><th>Semana</th></tr></thead>
+        <tbody>
+          <tr><td>S&P 500</td><td>6.600</td><td class="up">▲–1.56%</td></tr>
+          <tr><td>Nasdaq</td><td>21.930</td><td class="dn">▼–2.1%</td></tr>
+          <tr><td>VIX</td><td>+23%</td><td class="up">▲ miedo alto</td></tr>
+          <tr><td>T-Note 10Y</td><td>4.28%</td><td class="up">▲ máx 2 meses</td></tr>
+          <tr><td>DXY</td><td>>100</td><td class="up">▲ refugio</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ACCIONES COLOMBIA -->
+  <div class="slabel">ACCIONES BVC — COLOMBIA</div>
+  <div class="g2" style="margin-bottom:22px;">
+    <div class="card">
+      <table class="mtable">
+        <thead><tr><th>Empresa</th><th>COP</th><th>24h</th><th>Mes</th><th>Año</th></tr></thead>
+        <tbody>
+          <tr><td>Ecopetrol</td><td>2.735</td><td class="dn">–1.6%</td><td class="up">+15.9%</td><td class="up">+27.2%</td></tr>
+          <tr><td>Bancolombia pref.</td><td>~38.500</td><td class="neu">≈</td><td class="up">+8.2%</td><td class="up">+12.1%</td></tr>
+          <tr><td>Grupo Sura</td><td>~27.200</td><td class="neu">≈</td><td class="up">+5.4%</td><td class="up">+9.3%</td></tr>
+          <tr><td>Grupo Nutresa</td><td>~89.000</td><td class="neu">≈</td><td class="up">+3.1%</td><td class="up">+7.8%</td></tr>
+          <tr><td>Ecopetrol ADR (NYSE)</td><td>$12.54</td><td class="up">+8.2%</td><td class="up">+18.4%</td><td class="up">+35.1%</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px;color:var(--gray);margin-top:8px;font-family:'DM Mono',monospace;">⚠ Valores aproximados. Verificar con BVC para datos en tiempo real.</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gold);margin-bottom:12px;letter-spacing:1px;">CONTEXTO ECOPETROL</div>
+      <div style="font-size:12px;color:rgba(244,246,250,.7);line-height:1.6;">
+        Ecopetrol es el mayor beneficiario del conflicto Irán–Israel en la BVC. Con WTI sobre $95, la compañía maximiza ingresos de exportación. Sin embargo, la acción muestra corrección a corto plazo (-1.6% en 24h) en línea con toma de ganancias del mercado.<br><br>
+        <strong style="color:var(--gold);">Resultado Q4 2025:</strong> Utilidades de $9 billones COP, las más bajas desde la pandemia, con deuda de US$30.000M según la USO.<br><br>
+        <strong style="color:var(--gold);">Próximo evento:</strong> Resultados Q1 2026 el 12 mayo.
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCIONES TECH GLOBAL -->
+  <div class="slabel">TECNOLOGÍA GLOBAL — SEMANA 27 MARZO 2026</div>
+  <div class="card" style="margin-bottom:22px;">
+    <table class="mtable">
+      <thead><tr><th>Empresa</th><th>Ticker</th><th>Precio USD</th><th>24h</th><th>Semana</th><th>52W Max</th><th>Nota clave</th></tr></thead>
+      <tbody>
+        <tr><td>Nvidia</td><td>NVDA</td><td>$167.52</td><td class="dn">–2.17%</td><td class="dn">–21% desde máx.</td><td>$212.19</td><td style="font-size:10px;color:var(--gray);">Deep correction. Compra técnica según CNBC</td></tr>
+        <tr><td>Apple</td><td>AAPL</td><td>~$195</td><td class="dn">–1.2%</td><td class="dn">–3.1%</td><td>—</td><td style="font-size:10px;color:var(--gray);">Magnificient 7 en presión</td></tr>
+        <tr><td>Alphabet (Google)</td><td>GOOGL</td><td>$289.59</td><td class="up">+0.4%</td><td class="dn">–1.8%</td><td>—</td><td style="font-size:10px;color:var(--gray);">Publicidad digital sólida vs. IA capex</td></tr>
+        <tr><td>Tesla</td><td>TSLA</td><td>$385.95</td><td class="up">+2.3%</td><td class="up">+1.1%</td><td>—</td><td style="font-size:10px;color:var(--gray);">Rebote por optimismo en robótica</td></tr>
+        <tr><td>Microsoft</td><td>MSFT</td><td>~$402</td><td class="dn">–0.8%</td><td class="dn">–2.4%</td><td>—</td><td style="font-size:10px;color:var(--gray);">Presionado por oil shock</td></tr>
+        <tr><td>Meta</td><td>META</td><td>~$571</td><td class="dn">–1.4%</td><td class="dn">–4.2%</td><td>—</td><td style="font-size:10px;color:var(--gray);">Litigios + oil sell-off</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:10px;color:var(--gray);margin-top:8px;font-family:'DM Mono',monospace;">Magnificient 7 perdieron $1.72T en capitalización. Estrategas advierten peores valuaciones desde dotcom 2000. ⚠ Precios aproximados — verificar Yahoo Finance / Investing.com</div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════ SECTORES ═══════ -->
+<div id="p-sectores" class="panel">
+<div class="wrap">
+
+
+  <div class="slabel">NOTICIAS POR SECTOR · COLOMBIA</div>
+
+  <div class="news-card featured">
+    <div class="nc-meta"><span class="badge b-sec">CONSTRUCCIÓN E INFRAESTRUCTURA</span><span class="nc-src">La República / Camacol / El País</span><span class="nc-date">Semana</span></div>
+    <div class="nc-title big">Invías paralizado: 430.000 millones en facturas sin pagar, obras en riesgo y escándalo político</div>
+    <div class="nc-body">El escándalo de corrupción en el Invías bloquea el pago a más de 430.000 millones de pesos en contratos. Camacol alerta por desmonte de subsidios de vivienda VIS y encarecimiento de TES. La construcción creció +13% en enero-febrero (datos de Perú como referencia regional), pero en Colombia el sector enfrenta debilidad en edificaciones con rezago en licencias. Tasas Banrep en 10.25% limitan el crédito hipotecario. Concesiones 5G con financiación en riesgo por inestabilidad política.</div>
+    <div class="nc-foot"><span class="imp imp-h">IMPACTO SECTORIAL MUY ALTO</span></div>
+  </div>
+
+  <div class="g2">
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">LOGÍSTICA Y TRANSPORTE</span><span class="nc-src">Bancolombia / La Nota Económica</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Petróleo a $98 dispara costos logísticos; sector creció en datos regionales pero Colombia rezagada</div>
+      <div class="nc-body">El WTI sobre $95 eleva costos de combustible para transporte de carga. 10° Encuentro de Movilidad y Logística en Colombia destacó digitalización y sostenibilidad. La economía arranca 2026 con compras lideradas por tecnología (+38%) y vehículos (+30.5%). Vía Bogotá-Villavicencio sigue siendo cuello de botella de inversión.</div>
+      <div class="nc-foot"><span class="imp imp-h">IMPACTO ALTO</span><span class="vtag">→ Informe #001 VISORIA</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">SECTOR FINANCIERO</span><span class="nc-src">Bancolombia / Banrep</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Tasa Banrep sube a 10.25% — servicios financieros lideran crecimiento sectorial en 2026</div>
+      <div class="nc-body">Los servicios financieros y profesionales son de los pocos sectores con senda de avance sostenido en 2026. La junta del Banrep subió 100 pbs en enero. El crédito de consumo crece pero la carga financiera sube. Bancolombia registró resultados récord en 2025 con dividendos de US$29.5M aprobados.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">SALUD Y FARMACÉUTICO</span><span class="nc-src">Bancolombia Capital Inteligente</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Sector salud: PIB creció 28% vs 2019 pero tensión financiera persiste; UPC no cubre costos crecientes</div>
+      <div class="nc-body">El sector salud tiene altos niveles de actividad pero enfrenta viabilidad financiera. La UPC no compensa los costos crecientes. ADRES sostiene pagos pero hay dudas sobre sostenibilidad. La reforma de salud sigue siendo factor de incertidumbre. Inversión extranjera en salud y farmacéutico en aumento.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">TECNOLOGÍA DIGITAL</span><span class="nc-src">MinTIC / Bancolombia</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Tecnología lidera compras de colombianos (+38%) pero sector TIC presionado por competencia</div>
+      <div class="nc-body">Equipos de informática y telecomunicaciones lideran ventas (+38%). Comercio electrónico +18%. Sin embargo, el sector TIC tiene márgenes bajo presión: precios sin subir desde 2019 pese a inflación. Colombia como hub tech con 51.1M de accesos móviles proyectados en 2026. Bogotá y Medellín como centros de desarrollo tech internacional.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">AGROINDUSTRIA</span><span class="nc-src">BBVA Research / Portafolio</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Agro lidera junto a minería el crecimiento sectorial en 2026 — pero faltan cadenas logísticas</div>
+      <div class="nc-body">La agricultura es uno de los sectores que "mantienen su dinamismo" en un contexto de desaceleración general. Sin embargo, BBVA Research y analistas señalan la ausencia de infraestructura de riego y cadenas logísticas como freno al potencial exportador. Remesas superan $1.000M por 21 meses consecutivos, apoyando consumo rural.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span></div>
+    </div>
+
+    <div class="news-card">
+      <div class="nc-meta"><span class="badge b-sec">RETAIL Y CONSUMO</span><span class="nc-src">La Nota Económica / DANE</span><span class="nc-date">Semana</span></div>
+      <div class="nc-title">Consumo colombiano resiliente: tecnología, movilidad y e-commerce jalan ventas en enero 2026</div>
+      <div class="nc-body">DANE reportó: equipos informáticos +38%, sonido/video +36.6%, vehículos +30.5%, e-commerce +18%. Industria en negativo (-0.5% producción, -0.7% ventas). La economía avanza "a múltiples velocidades" según Portafolio. Consumo privado dinámico gracias a mercado laboral y remesas.</div>
+      <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ═══════ POLÍTICA ═══════ -->
+<div id="p-politica" class="panel">
+<div class="wrap">
+
+
+  <div class="slabel">POLÍTICA NACIONAL · 23–29 MARZO 2026</div>
+
+  <div class="news-card featured">
+    <div class="nc-meta"><span class="badge b-cor">ESCÁNDALO INVÍAS</span><span class="nc-src">Semana · 28 Mar 2026</span></div>
+    <div class="nc-title big">+30 congresistas investigados por Invías: escándalo mayor que UNGRD, con 430.000M en facturas paralizadas</div>
+    <div class="nc-body">La Corte Suprema tiene en la mira a más de 30 parlamentarios que habrían recibido contratos del Invías a cambio de votos. Testigo clave: María Alejandra Benavides, exasesora de MinHacienda. Los exministros Bonilla y Velasco — ya detenidos por UNGRD — vuelven a aparecer señalados. El Invías tiene 430.000M en facturas sin pagar, paralizando obras de infraestructura vial.</div>
+    <div class="nc-foot"><span class="imp imp-h">IMPACTO INSTITUCIONAL CRÍTICO</span></div>
+  </div>
+
+  <div class="news-card">
+    <div class="nc-meta"><span class="badge b-cor">JUDICIAL · UNGRD</span><span class="nc-src">El País / Infobae · 27 Mar</span></div>
+    <div class="nc-title">Tribunal ratifica condena a exasesor UNGRD con inhabilidad perpetua; Manzur y Manrique a la cárcel</div>
+    <div class="nc-body">El Tribunal Superior de Bogotá confirmó 4 años y 10 meses para Pedro Andrés Rodríguez Melo, con inhabilidad perpetua. Los congresistas Wadith Manzur y Karen Manrique fueron enviados a la cárcel el 11 de marzo por la Corte Suprema. El caso se expande hacia el Invías con más de 30 nuevos investigados.</div>
+    <div class="nc-foot"><span class="imp imp-h">IMPACTO ALTO</span></div>
+  </div>
+
+  <div class="news-card">
+    <div class="nc-meta"><span class="badge b-pol">DIPLOMÁTICO</span><span class="nc-src">CNN / El Tiempo · Semana</span></div>
+    <div class="nc-title">Colombia–Ecuador: tensión diplomática persiste; Brasil ofrece mediación</div>
+    <div class="nc-body">Las tensiones entre Colombia y Ecuador escalan. Petro amenazó con nota diplomática. Ecuador avanza con EE.UU. en operaciones anti-narcóticos sin Colombia. Brasil se ofreció como mediador. Captura del "Lobo Menor" en México fue calificada como "golpe importante".</div>
+    <div class="nc-foot"><span class="imp imp-m">IMPACTO MEDIO</span></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════ ELECCIONES ═══════ -->
+<div id="p-elecciones" class="panel">
+<div class="wrap">
+
+
+  <div class="stat-strip" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat"><div class="stat-lbl">DÍAS PARA 1ª VUELTA</div><div class="stat-val">63</div><div class="stat-chg neu">31 Mayo 2026</div></div>
+    <div class="stat"><div class="stat-lbl">CANDIDATOS</div><div class="stat-val">14</div><div class="stat-chg neu">Tarjetón cerrado</div></div>
+    <div class="stat"><div class="stat-lbl">2ª VUELTA (si aplica)</div><div class="stat-val">21 Jun</div><div class="stat-chg neu">Encuestas: probable</div></div>
+  </div>
+
+  <div class="slabel">INTENCIÓN DE VOTO — GUARUMO/ECOANALÍTICA · 25 MAR 2026</div>
+
+  <div class="g2">
+    <div>
+      <div class="poll">
+        <div class="poll-top"><div><div class="poll-name">Iván Cepeda Castro</div><div class="poll-party">Pacto Histórico · VP: Aida Quilcué</div></div><div class="poll-pct">37.5%</div></div>
+        <div class="bar-bg"><div class="bar" style="width:75%;background:linear-gradient(90deg,#c0392b,#e74c3c);"></div></div>
+        <div style="font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;margin-top:5px;">▲ +3.9pp vs. enero. Liderazgo consolidado post-elecciones legislativas</div>
+      </div>
+      <div class="poll">
+        <div class="poll-top"><div><div class="poll-name">Abelardo de la Espriella</div><div class="poll-party">Defensores de la Patria · VP: J.M. Restrepo</div></div><div class="poll-pct">20.2%</div></div>
+        <div class="bar-bg"><div class="bar" style="width:40%;background:linear-gradient(90deg,#2980b9,#3498db);"></div></div>
+        <div style="font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;margin-top:5px;">▼ –2.4pp vs. feb. Riesgo por no aceptar apoyo de partidos tradicionales</div>
+      </div>
+      <div class="poll">
+        <div class="poll-top"><div><div class="poll-name">Paloma Valencia</div><div class="poll-party">Centro Democrático · VP: Juan Daniel Oviedo</div></div><div class="poll-pct">19.9%</div></div>
+        <div class="bar-bg"><div class="bar" style="width:40%;background:linear-gradient(90deg,#c8973a,#f5d080);"></div></div>
+        <div style="font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;margin-top:5px;">▲ +13pp vs. enero — MAYOR crecimiento del período. Oviedo como VP amplía base</div>
+      </div>
+      <div class="poll">
+        <div class="poll-top"><div><div class="poll-name">Sergio Fajardo</div><div class="poll-party">Dignidad y Compromiso · VP: Edna Bonilla</div></div><div class="poll-pct">7.8%</div></div>
+        <div class="bar-bg"><div class="bar" style="width:16%;background:linear-gradient(90deg,#27ae60,#2ecc71);"></div></div>
+      </div>
+      <div class="poll">
+        <div class="poll-top"><div><div class="poll-name">Voto en blanco / Indecisos</div><div class="poll-party">Electorado no comprometido</div></div><div class="poll-pct">16.7%</div></div>
+        <div class="bar-bg"><div class="bar" style="width:33%;background:linear-gradient(90deg,#8e44ad,#9b59b6);"></div></div>
+        <div style="font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;margin-top:5px;">Alta indecisión. Cambiante en escenarios 2da vuelta</div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gold);margin-bottom:10px;letter-spacing:1px;">ESCENARIOS 2DA VUELTA</div>
+        <table class="mtable">
+          <thead><tr><th>Escenario</th><th>Cepeda</th><th>Rival</th></tr></thead>
+          <tbody>
+            <tr><td>vs. De la Espriella</td><td class="up">44.9%</td><td>36.4%</td></tr>
+            <tr><td>vs. Valencia</td><td class="up">—</td><td>—</td></tr>
+            <tr><td>vs. Fajardo</td><td class="up">44.8%</td><td>28.4%</td></tr>
+          </tbody>
+        </table>
+        <div style="font-size:10px;color:var(--gray);margin-top:8px;font-family:'DM Mono',monospace;">Fuente: Guarumo–Ecoanalítica. Margen de error: ±2.2%</div>
+      </div>
+      <div class="card">
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gold);margin-bottom:10px;letter-spacing:1px;">HITOS ELECTORALES</div>
+        <div style="font-size:12px;color:rgba(244,246,250,.7);line-height:1.8;">
+          📅 <strong>Hoy 31 Mar:</strong> Último día inscripción cédula<br>
+          📅 <strong>~24 May:</strong> Semana de reflexión — definición de alianzas<br>
+          📅 <strong>31 May:</strong> Primera vuelta presidencial<br>
+          📅 <strong>21 Jun:</strong> Segunda vuelta (probable)<br>
+          📅 <strong>7 Ago:</strong> Posesión nuevo presidente
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════ VISORIA ESTRATÉGICO ═══════ -->
+<div id="p-visoria" class="panel">
+<div class="wrap">
+
+
+  <div style="background:linear-gradient(135deg,#0a1f3a,#0e2848);border:1px solid rgba(200,151,58,.4);border-radius:12px;padding:20px;margin-bottom:22px;">
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:6px;">Pulso VISORIA · Lectura Estratégica</div>
+    <div style="font-size:12px;color:var(--gray);">Cómo aprovechar cada noticia esta semana para posicionar VISORIA Intelligence como firma de referencia en inteligencia de mercados.</div>
+  </div>
+
+  <div class="slabel">OPORTUNIDADES DE CONTENIDO</div>
+
+  <div class="vis-block">
+    <div class="vis-header"><div class="vis-dot"></div><div class="vis-title">CASO INVÍAS / CORRUPCIÓN PÚBLICA</div><span class="vis-type vt-cnt">OPORTUNIDAD CONTENIDO</span></div>
+    <div class="vis-body">El escándalo del Invías con +30 congresistas investigados y 430.000M en facturas paralizadas es el tema del momento. VISORIA puede posicionarse publicando un análisis del <strong style="color:var(--goldl);">impacto económico de la paralización de obra pública</strong> en los sectores de construcción, logística e infraestructura. Esto demuestra que VISORIA lee más allá de la política y traduce los escándalos en datos para ejecutivos.</div>
+    <div class="vis-action">📌 POST LINKEDIN: "Cuánto le cuesta al sector constructor colombiano la parálisis del Invías: análisis de los 430.000 millones en riesgo" → citando datos del DANE, Camacol y La República.</div>
+  </div>
+
+  <div class="vis-block">
+    <div class="vis-header"><div class="vis-dot"></div><div class="vis-title">WTI A $98.7 — PETRÓLEO COMO DRIVER MACRO</div><span class="vis-type vt-pos">POSTURA VISORIA</span></div>
+    <div class="vis-body">El conflicto Irán–Israel colocó el WTI en $98.7 (+54% en 2026). VISORIA tiene una posición diferenciada aquí: <strong style="color:var(--goldl);">para Colombia, los precios altos del petróleo son una espada de doble filo.</strong> Más ingresos por exportaciones y peso más fuerte, pero también más inflación importada en transporte y manufactura. Ningún competidor en Colombia traduce esto en términos sectoriales para ejecutivos locales.</div>
+    <div class="vis-action">📌 POSTURA VISORIA: Publicar análisis "El petróleo a $100: ganadores y perdedores por sector en Colombia" — diferenciando sectores exportadores (beneficiados) de sectores con altos costos logísticos (perjudicados). Artículo de autoridad para LinkedIn.</div>
+  </div>
+
+  <div class="vis-block">
+    <div class="vis-header"><div class="vis-dot"></div><div class="vis-title">ELECCIONES PRESIDENCIALES — INCERTIDUMBRE SECTORIAL</div><span class="vis-type vt-inf">INSUMO INFORME</span></div>
+    <div class="vis-body">Con 63 días para primera vuelta y tres candidatos en empate técnico para los dos cupos de segunda vuelta, la incertidumbre electoral ya afecta decisiones de inversión FDI. VISORIA puede ofrecer lo que nadie más ofrece: <strong style="color:var(--goldl);">análisis sectorial bajo tres escenarios electorales</strong> (Cepeda, Valencia, De la Espriella) y sus implicaciones para sectores como energía, construcción, salud y financiero.</div>
+    <div class="vis-action">📌 INSUMO INFORME: En todos los informes sectoriales publicados hasta junio, añadir sección "Riesgo electoral 2026: implicaciones para el sector bajo los 3 principales escenarios presidenciales". Diferencial único que ningún competidor ofrece hoy.</div>
+  </div>
+
+  <div class="vis-block">
+    <div class="vis-header"><div class="vis-dot"></div><div class="vis-title">LOGÍSTICA: TEMA DEL MES CON TRES DRIVERS CONVERGENTES</div><span class="vis-type vt-cnt">OPORTUNIDAD CONTENIDO + INSUMO</span></div>
+    <div class="vis-body">Esta semana convergen tres eventos que hacen de logística el sector más relevante para publicar AHORA: (1) WTI a $98 eleva costos de combustible. (2) Invías paralizado afecta infraestructura vial. (3) Compras de colombianos lideradas por tecnología y vehículos (+38% y +30.5%). <strong style="color:var(--goldl);">El informe #001 de VISORIA sobre Logística y Transporte no podría tener mejor timing que esta semana.</strong></div>
+    <div class="vis-action">📌 ACCIÓN INMEDIATA: Iniciar producción del Informe #001 — Logística y Transporte de Carga Colombia 2026. El mercado está buscando exactamente este análisis ahora. Publicar la semana del 6 de abril máximo.</div>
+  </div>
+
+  <div class="vis-block">
+    <div class="vis-header"><div class="vis-dot"></div><div class="vis-title">ORO EN $4.493 Y TECNOLOGÍA EN CAÍDA — SEÑAL PARA SECTORES FINANCIERO</div><span class="vis-type vt-pos">POSTURA VISORIA</span></div>
+    <div class="vis-body">El oro tocó máximos históricos de $5.597 en enero y ahora cae a $4.493 (–14% en el mes). Simultáneamente, Nvidia pierde 21% desde máximos y el Nasdaq cae a 21.930. <strong style="color:var(--goldl);">Esto comunica un mensaje estructural: rotación desde activos de crecimiento (tech) hacia activos refugio (dólar, bonos) y energía.</strong> Para el sector financiero colombiano, esto significa presión sobre fondos de inversión con exposición a tech y oportunidad en commodities.</div>
+    <div class="vis-action">📌 POST LINKEDIN (semana 30 mar): "Tres señales que los mercados globales envían al sector financiero colombiano esta semana" — posicionando a VISORIA como firma que une los puntos entre Wall Street, Medio Oriente y Colombia.</div>
+  </div>
+
+  <div class="vis-block">
+    <div class="vis-header"><div class="vis-dot"></div><div class="vis-title">BBVA PROYECTA PIB 2026 EN +2.8% — POSTURA SOBRE ESCENARIO MACRO</div><span class="vis-type vt-pos">POSTURA VISORIA</span></div>
+    <div class="vis-body">BBVA Research proyecta PIB Colombia 2026 en +2.8% con advertencia sobre inflación y tasas altas (Banrep en 10.25%). Bancolombia señala "economía a múltiples velocidades". <strong style="color:var(--goldl);">VISORIA puede publicar una lectura propia del macro colombiano que sirva como introducción gratuita a sus informes sectoriales.</strong> El "Radar Estratégico Colombia 2026" (PESTEL + DOFA nacional) encaja perfectamente aquí como primer producto a lanzar.</div>
+    <div class="vis-action">📌 PRODUCTO INMEDIATO: El Radar Estratégico Colombia 2026 ($390 USD) tiene todos sus ingredientes esta semana. Petróleo, elecciones, tasas, corrupción, consumo. Producir y publicar antes del 15 de abril como producto estrella de lanzamiento.</div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#0a1828,#0d2240);border:1px solid rgba(200,151,58,.3);border-radius:10px;padding:18px;margin-top:8px;">
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:2px;margin-bottom:14px;">RESUMEN ACCIONES PRIORITARIAS ESTA SEMANA</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:12px;">
+      <span style="color:var(--gold);font-family:'DM Mono',monospace;">HOY</span><span style="color:rgba(244,246,250,.8);">Publicar post LinkedIn sobre petróleo $98 e impacto sectorial Colombia</span>
+      <span style="color:var(--gold);font-family:'DM Mono',monospace;">LUN 30</span><span style="color:rgba(244,246,250,.8);">Iniciar producción Informe #001 Logística — timing perfecto con coyuntura Invías</span>
+      <span style="color:var(--gold);font-family:'DM Mono',monospace;">MIÉ 1</span><span style="color:rgba(244,246,250,.8);">Publicar análisis "3 señales de mercados globales al sector financiero colombiano"</span>
+      <span style="color:var(--gold);font-family:'DM Mono',monospace;">VIE 3</span><span style="color:rgba(244,246,250,.8);">Iniciar Radar Estratégico Colombia 2026 — primer producto de lanzamiento visoria.co</span>
+      <span style="color:var(--gold);font-family:'DM Mono',monospace;">SEM 2</span><span style="color:rgba(244,246,250,.8);">Publicar Informe #001 Logística y lanzamiento visoria.co con post + email</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer style="border-top:1px solid var(--border);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;margin-top:32px;">
+  <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gray);">VISORIA Intelligence · visoria.co · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f1989f979eb18798829e839890df929e">[email&#160;protected]</a> · Bogotá, Colombia</div>
+  <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(138,154,176,.5);">Edición #001 · Dom 29 Mar 2026 · Confidencial</div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ─── TAB SWITCHING ───
+function tab(id){
+  document.querySelectorAll('.nt').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  const idx={resumen:0,mercados:1,sectores:2,politica:3,elecciones:4,visoria:5};
+  document.querySelectorAll('.nt')[idx[id]].classList.add('on');
+  document.getElementById('p-'+id).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='mercados') setTimeout(initCharts,100);
+  if(id==='elecciones') animateBars();
+}
+
+// ─── CHART DATA ───
+const DATA = {
+  usd: {
+    semana: { labels:['L 23','M 24','X 25','J 26','V 27'], wtf:null, vals:[3704,3705,3701,3688,3675] },
+    mes:    { labels:['1','5','10','15','20','25','29'], vals:[3766,3780,3797,3720,3692,3700,3675] },
+    tri:    { labels:['Ene','Feb','Mar'], vals:[3757,3695,3675] },
+    sem:    { labels:['Oct','Nov','Dic','Ene','Feb','Mar'], vals:[4010,3950,3757,3720,3695,3675] },
+    anio:   { labels:['Ene25','Abr25','Jul25','Oct25','Ene26','Mar26'], vals:[4409,4250,3980,4100,3757,3675] }
+  },
+  oil: {
+    semana: { labels:['L 23','M 24','X 25','J 26','V 27'], vals:[91,96,94,97,99], brent:[107,112,109,113,115] },
+    mes:    { labels:['1','5','10','15','20','25','29'], vals:[64,66,70,80,88,96,99], brent:[74,76,82,93,102,111,115] },
+    tri:    { labels:['Ene','Feb','Mar'], vals:[57,60,99], brent:[66,70,115] },
+    sem:    { labels:['Oct','Nov','Dic','Ene','Feb','Mar'], vals:[74,72,64,57,60,99], brent:[85,83,74,66,70,115] },
+    anio:   { labels:['Ene25','Abr25','Jul25','Oct25','Ene26','Mar26'], vals:[82,76,70,74,57,99], brent:[94,88,82,85,66,115] }
+  },
+  gold: {
+    semana: { labels:['L 23','M 24','X 25','J 26','V 27'], vals:[4800,4720,4630,4510,4493] },
+    mes:    { labels:['1','5','10','15','20','25','29'], vals:[5200,5100,4900,4700,4488,4530,4493] },
+    tri:    { labels:['Ene','Feb','Mar'], vals:[5200,4900,4493] },
+    sem:    { labels:['Oct','Nov','Dic','Ene','Feb','Mar'], vals:[2900,3100,3500,5597,5200,4493] },
+    anio:   { labels:['Ene25','Abr25','Jul25','Oct25','Ene26','Mar26'], vals:[2500,2800,2900,2700,5597,4493] }
+  }
+};
+
+let charts = {};
+let currentRange = {usd:'semana', oil:'semana', gold:'tri'};
+
+function chartCfg(labels, datasets, yPrefix='$'){
+  return {
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{labels:{color:'rgba(244,246,250,.5)',font:{size:10,family:'DM Mono'}}}, tooltip:{callbacks:{label:c=>yPrefix+(+c.raw).toLocaleString()}} },
+      scales:{
+        x:{ ticks:{color:'rgba(244,246,250,.35)',font:{size:9,family:'DM Mono'}}, grid:{color:'rgba(255,255,255,.04)'} },
+        y:{ ticks:{color:'rgba(244,246,250,.35)',font:{size:9,family:'DM Mono'},callback:v=>yPrefix+(+v).toLocaleString()}, grid:{color:'rgba(255,255,255,.04)'} }
+      }
+    }
+  };
+}
+
+function initCharts(){
+  if(charts.usd) return;
+  const d = DATA.usd.semana;
+  charts.usd = new Chart(document.getElementById('chartUSD'), chartCfg(d.labels,[{label:'USD/COP',data:d.vals,borderColor:'#C8973A',backgroundColor:'rgba(200,151,58,.1)',borderWidth:2,pointRadius:3,fill:true,tension:.4}]));
+  const o = DATA.oil.semana;
+  charts.oil = new Chart(document.getElementById('chartOil'), chartCfg(o.labels,[
+    {label:'WTI',data:o.vals,borderColor:'#e74c3c',backgroundColor:'rgba(231,76,60,.08)',borderWidth:2,pointRadius:2,fill:false,tension:.4},
+    {label:'Brent',data:o.brent,borderColor:'#f39c12',backgroundColor:'rgba(243,156,18,.08)',borderWidth:2,pointRadius:2,fill:false,tension:.4}
+  ],'$'));
+  const g = DATA.gold.tri;
+  charts.gold = new Chart(document.getElementById('chartGold'), chartCfg(g.labels,[{label:'Oro XAU/USD',data:g.vals,borderColor:'#F5D080',backgroundColor:'rgba(245,208,128,.08)',borderWidth:2,pointRadius:3,fill:true,tension:.4}],'$'));
+}
+
+function setRange(type, range){
+  currentRange[type] = range;
+  document.querySelectorAll(`#${type}-rg .rbtn`).forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  const d = DATA[type][range];
+  const c = charts[type];
+  if(!c) return;
+  c.data.labels = d.labels;
+  if(type==='oil'){
+    c.data.datasets[0].data = d.vals;
+    c.data.datasets[1].data = d.brent;
+  } else {
+    c.data.datasets[0].data = d.vals;
+  }
+  c.update();
+}
+
+function animateBars(){
+  document.querySelectorAll('.bar').forEach(b=>{
+    const w = b.style.width; b.style.width='0';
+    setTime
